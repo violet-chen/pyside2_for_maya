@@ -1,5 +1,5 @@
 # coding:utf-8
-# 选择项切换分辨率
+# 选择项切换分辨率QListWidget
 from PySide2 import QtCore
 from PySide2 import QtWidgets
 from PySide2 import QtGui
@@ -63,6 +63,7 @@ class OutputResolutionDialog(QtWidgets.QDialog):
         self.close_btn.clicked.connect(self.close)
 
     def set_output_resolution(self, item):
+        # items = self.resolution_list_wdg.selectedItems() # 得到所有选择的item
         resolution = item.data(QtCore.Qt.UserRole)
 
         cmds.setAttr("defaultResolution.width", resolution[0])
