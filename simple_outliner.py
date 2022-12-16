@@ -41,7 +41,7 @@ class SimpleOutliner(QtWidgets.QDialog):
         self.create_layout()
         self.create_connections()
 
-        # 配合自定义的show_context_menu函数使其能右键显示自定义菜单
+        # 配合自定义的show_context_menu函数使其能右键显示自定义菜单 policy是策略的意思，这里意思是这个菜单显示策略是属于整个dialog的
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)  
         self.customContextMenuRequested.connect(self.show_context_menu)  
 
