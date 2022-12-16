@@ -1,4 +1,5 @@
 # coding:utf-8
+# QTableWidget举例，控制场景中所有物体的显示，位移
 from PySide2 import QtCore
 from PySide2 import QtWidgets
 from PySide2 import QtGui
@@ -51,9 +52,9 @@ class TableExampleDialog(QtWidgets.QDialog):
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(2, 2, 2, 2)
-        main_layout.setSpacing(2)
+        # main_layout.setSpacing(2)
+        # main_layout.addStretch()
         main_layout.addWidget(self.table_wdg)
-        main_layout.addStretch()
         main_layout.addLayout(button_layout)
 
     def create_connections(self):
