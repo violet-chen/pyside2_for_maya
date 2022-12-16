@@ -41,12 +41,14 @@ class SimpleOutliner(QtWidgets.QDialog):
         self.create_layout()
         self.create_connections()
 
-        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)  # 使能显示上下文菜单
-        self.customContextMenuRequested.connect(self.show_context_menu)  # 设置上下文菜单的ui
+        # 配合自定义的show_context_menu函数使其能右键显示自定义菜单
+        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)  
+        self.customContextMenuRequested.connect(self.show_context_menu)  
 
         self.refresh_tree_widget()
 
     def create_actions(self):
+        """ 创建新的action用来添加到菜单栏工具栏 """
         self.about_action = QtWidgets.QAction("About", self)
 
         self.display_shape_action = QtWidgets.QAction("Shapes", self)
@@ -163,6 +165,7 @@ class SimpleOutliner(QtWidgets.QDialog):
             iterator += 1
 
     def show_context_menu(self, point):
+        """ 右键显示菜单的内容 """
         context_menu = QtWidgets.QMenu()
         context_menu.addAction(self.display_shape_action)
         context_menu.addSeparator()  # 分割线
