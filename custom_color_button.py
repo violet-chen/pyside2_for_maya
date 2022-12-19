@@ -66,9 +66,6 @@ class TestDialog(QtWidgets.QDialog):
             cmds.deleteUI(window_name, window=True)
         self.setObjectName(window_name)
 
-        self.foreground_color = QtGui.QColor(QtCore.Qt.white)
-        self.background_color = QtGui.QColor(QtCore.Qt.black)
-
         self.create_widgets()
         self.create_layouts()
         self.create_connections()
