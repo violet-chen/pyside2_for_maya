@@ -14,10 +14,12 @@ def maya_main_window():
 
 class TestDialog(QtWidgets.QDialog):
 
+    WINDOW_TITLE = "MAYA-2018"
+
     def __init__(self, parent=maya_main_window()):
         super(TestDialog, self).__init__(parent)
         
-        self.setWindowTitle('MAYA-2018')
+        self.setWindowTitle(self.WINDOW_TITLE)
         self.setMinimumSize(300, 80)
         self.setWindowFlags(QtCore.Qt.WindowType.Window)
         window_name = "WindowName"
