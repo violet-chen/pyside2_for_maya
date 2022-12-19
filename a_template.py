@@ -1,34 +1,25 @@
 # coding:utf-8
+from PySide2 import QtCore
+from PySide2 import QtWidgets
+from PySide2 import QtGui
+from shiboken2 import wrapInstance
+import maya.OpenMayaUI as omui
 import maya.cmds as cmds
-import maya.mel as mel
-
-try:
-    from PySide2.QtWidgets import *
-    from PySide2.QtCore import *
-except:
-    from PySide.QtGui import *
-    from PySide.QtCore import *
-
-try:
-    from shiboken2 import wrapInstance
-except ImportError:
-    from shiboken import wrapInstance
-from maya import OpenMayaUI as omui
 
 
 def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
-    return wrapInstance(long(main_window_ptr), QWidget)
+    return wrapInstance(long(main_window_ptr), QtWidgets.QWidget)
 
 
-class TestDialog(QDialog):
+class TestDialog(QtWidgets.QDialog):
 
     def __init__(self, parent=maya_main_window()):
         super(TestDialog, self).__init__(parent)
         
         self.setWindowTitle('MAYA-2018')
         self.setMinimumSize(300, 80)
-        self.setWindowFlags(Qt.WindowType.Window)
+        self.setWindowFlags(QtCore.Qt.WindowType.Window)
         window_name = "WindowName"
         if cmds.window(window_name, exists=True):
             cmds.deleteUI(window_name, window=True)
@@ -53,9 +44,11 @@ class TestDialog(QDialog):
 
 
 
-def main():
-    global aa
-    app = qApp if QApplication.instance() else QApplication([])
-    aa = TestDialog()
-    aa.show()
-    app.exec_()
+if __name__ == '__main__':
+    try:
+        ui.close()
+        ui.deleteLater()
+    except:
+        pass
+    ui = TestDialog()
+    ui.show()
