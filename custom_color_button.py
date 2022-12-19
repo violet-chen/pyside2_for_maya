@@ -12,12 +12,12 @@ def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
     return wrapInstance(long(main_window_ptr), QtWidgets.QWidget)
 
-class CustomColorLabel(QtWidgets.QLabel): # 扩展QLabel的内容
+class CustomColorButton(QtWidgets.QLabel): # 扩展QLabel的内容
 
     color_changed = QtCore.Signal() # 自定义信号
 
     def __init__(self, color=QtCore.Qt.white, parent=None): # 表示可以类接收一个颜色参数,默认是白色
-        super(CustomColorLabel, self).__init__(parent)
+        super(CustomColorButton, self).__init__(parent)
 
         self._color = QtGui.QColor() # _开头表示私有变量,表面希望通过函数获取与更改这个变量
 
@@ -72,8 +72,8 @@ class TestDialog(QtWidgets.QDialog):
 
     def create_widgets(self):
         """ 控件 """
-        self.foreground_color_btn = CustomColorLabel(QtCore.Qt.white) # 自定义的颜色按钮
-        self.background_color_btn = CustomColorLabel(QtCore.Qt.black) # 自定义的颜色按钮
+        self.foreground_color_btn = CustomColorButton(QtCore.Qt.white) # 自定义的颜色按钮
+        self.background_color_btn = CustomColorButton(QtCore.Qt.black) # 自定义的颜色按钮
 
         self.print_btn = QtWidgets.QPushButton("Print")
         self.close_btn = QtWidgets.QPushButton("Close")
