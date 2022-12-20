@@ -73,8 +73,8 @@ class CustomColorButton(QtWidgets.QWidget): # 扩展QLabel的内容
     def set_color(self, color):
         color = QtGui.QColor(color)
 
-        cmds.colorSliderGrp(self._name, e=True, rgbValue=(color.redF(), color.greenF(), color.blueF())) # F代表以浮点数表示
-        if color.isValid():
+        if color != self.get_color():
+            cmds.colorSliderGrp(self._name, e=True, rgbValue=(color.redF(), color.greenF(), color.blueF())) # F代表以浮点数表示
             self.on_color_changed()
     
     def get_color(self):
