@@ -13,7 +13,7 @@ def maya_main_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
     return wrapInstance(long(main_window_ptr), QtWidgets.QWidget)
 
-class CustomColorButton(QtWidgets.QWidget): # 扩展QLabel的内容
+class CustomColorButton(QtWidgets.QWidget): # 自定义颜色按钮
 
     color_changed = QtCore.Signal(QtGui.QColor) # 自定义信号
 
