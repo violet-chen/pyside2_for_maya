@@ -23,8 +23,6 @@ class TestDialog(QtWidgets.QDialog):
         self.setMinimumSize(300, 80)
         self.setWindowFlags(QtCore.Qt.WindowType.Window)
         window_name = "WindowName"
-        if cmds.window(window_name, exists=True):
-            cmds.deleteUI(window_name, window=True)
         self.setObjectName(window_name)
         self.setStyleSheet("font: 12pt 'Arial';")
 
