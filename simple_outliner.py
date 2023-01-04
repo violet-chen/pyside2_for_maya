@@ -65,7 +65,7 @@ class SimpleOutliner(QtWidgets.QDialog):
 
         self.tree_widget = QtWidgets.QTreeWidget()
         self.tree_widget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-        self.tree_widget.setHeaderHidden(True)
+        self.tree_widget.setHeaderHidden(True) # 隐藏树状控件的顶层
         # header = self.tree_widget.headerItem()
         # header.setText(0, "Column 0 Text")
 
