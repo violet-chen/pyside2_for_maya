@@ -1,5 +1,5 @@
 # coding:utf-8
-# 灯光面板举例
+# 灯光面板(scriptJobs)
 from functools import partial
 from PySide2 import QtCore
 from PySide2 import QtWidgets
@@ -87,22 +87,31 @@ class CustomColorButton(QtWidgets.QWidget): # 自定义颜色按钮
         self.color_changed.emit(self.get_color())
 
 class LightItem(QtWidgets.QWidget):
+    # 自定义灯光控件，一个灯光对应一个控件
 
     SUPPORTED_TYPES = ["ambientLight", "directionalLight", "pointLight", "spotLight", "areaLight"]
     EMIT_TYPES = ["directionalLight", "pointLight", "spotLight", "areaLight"]
+
+    node_deleted = QtCore.Signal(str) # 自定义节点删除时的信号
 
     def __init__(self, shape_name, parent=None):
         super(LightItem, self).__init__(parent)
 
         self.setFixedHeight(26)
 
-        self.shape_name = shape_name
+        self.shape_name = shape_name # 灯光的shape名字
+        self.uuid = cmds.ls(shape_name, uuid=True) # 灯光的uuid
+
+        self.script_jobs = []
 
         self.create_widgets()
         self.create_layout()
         self.create_connections()
+
+        self.create_script_jobs()
     
     def create_widgets(self):
+        """ 创建控件 """
         self.light_type_btn = QtWidgets.QPushButton()
         self.light_type_btn.setFixedSize(20, 20)
         self.light_type_btn.setFlat(True) # 设置按钮的显示形式
@@ -130,6 +139,7 @@ class LightItem(QtWidgets.QWidget):
         self.update_values()
     
     def create_layout(self):
+        """ 创建布局 """
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(self.light_type_btn)
@@ -151,6 +161,7 @@ class LightItem(QtWidgets.QWidget):
         main_layout.addStretch()
     
     def create_connections(self):
+        """ 创建信号与槽的连接 """
         self.light_type_btn.clicked.connect(self.select_light)
         self.visiblity_cb.toggled.connect(self.set_visibility)
         
@@ -184,6 +195,14 @@ class LightItem(QtWidgets.QWidget):
         return cmds.getAttr("{0}.{1}".format(name, attribute))
 
     def set_attribute_value(self, name, attribute,*args):
+
+        # 如果设置颜色或者属性的值与当前值相同就不进行设置，避免script job产生的重复设置属性的bug
+        if attribute == "color":
+            if self.get_color() == self.color_btn.get_color():
+                return
+        elif args[0] == self.get_attribute_value(name, attribute):
+            return
+        
         attr_name = "{0}.{1}".format(name, attribute)
         cmds.setAttr(attr_name, *args)
 
@@ -225,7 +244,7 @@ class LightItem(QtWidgets.QWidget):
         return self.get_attribute_value(self.shape_name, "emitSpecular")
     
     def select_light(self):
-        cmds.select(self.get_transform_name)
+        cmds.select(self.get_transform_name())
 
     def set_visibility(self, checked):
         self.set_attribute_value(self.get_transform_name(), "visibility", checked)
@@ -241,6 +260,42 @@ class LightItem(QtWidgets.QWidget):
 
     def set_emit_specular(self, checked):
         self.set_attribute_value(self.shape_name, "emitSpecular", checked)
+
+    def on_node_deleted(self):
+        """ 当节点删除时执行 """
+        self.node_deleted.emit(self.shape_name)
+
+    def on_name_changed(self):
+        """ 当名字修改时执行 """
+        self.shape_name = cmds.ls(self.uuid)[0]
+        self.update_values()
+    
+    def create_script_jobs(self):
+        """ 为每个灯光都创建script jobs """
+        self.delete_script_jobs()
+
+        self.add_attribute_change_script_job(self.get_transform_name(), "visibility")
+        light_type = self.get_light_type()
+        if light_type in self.SUPPORTED_TYPES:
+            self.add_attribute_change_script_job(self.shape_name, "color")
+            self.add_attribute_change_script_job(self.shape_name, "intensity")
+
+            if light_type in self.EMIT_TYPES:
+                self.add_attribute_change_script_job(self.shape_name, "emitDiffuse")
+                self.add_attribute_change_script_job(self.shape_name, "emitSpecular")
+
+        self.script_jobs.append(cmds.scriptJob(nodeDeleted=(self.shape_name, partial(self.on_node_deleted))))
+        self.script_jobs.append(cmds.scriptJob(nodeNameChanged=(self.shape_name, partial(self.on_name_changed))))
+    
+    def add_attribute_change_script_job(self, name, attribute):
+        """ 添加某一节点的某一属性改变时的script_job时使用的方法 """
+        self.script_jobs.append(cmds.scriptJob(attributeChange=("{0}.{1}".format(name, attribute), partial(self.update_values))))
+
+    def delete_script_jobs(self):
+        for job_number in self.script_jobs:
+            cmds.evalDeferred("if cmds.scriptJob(exists={0}):\tcmds.scriptJob(kill={0}, force=True)".format(job_number))
+        
+        self.script_jobs = []
     
 
 class LightPanel(QtWidgets.QDialog):
@@ -306,20 +361,27 @@ class LightPanel(QtWidgets.QDialog):
         self.refreshButton.clicked.connect(self.refresh_lights)
         
     def get_lights_in_scene(self):
+        """ 得到场景中所有灯光 """
         return cmds.ls(typ="light")
 
     def refresh_lights(self):
+        """ 刷新灯光面板 """
         self.clear_lights()
 
         scene_lights = self.get_lights_in_scene()
         for light in scene_lights:
             light_item = LightItem(light)
+            light_item.node_deleted.connect(self.on_node_deleted) # 自定义信号node_deleted发送数据时传给on_node_deleted函数
 
             self.light_layout.addWidget(light_item)
             self.light_items.append(light_item)
             
     
     def clear_lights(self):
+        """ 清空灯光面板 """
+        for light in self.light_items:
+            light.delete_script_jobs()
+
         self.light_items = []
         
         while self.light_layout.count() > 0:
@@ -328,24 +390,32 @@ class LightPanel(QtWidgets.QDialog):
                 light_item.widget().deleteLater()
     
     def create_script_jobs(self):
+        """ 创建script jobs """
         self.script_jobs.append(cmds.scriptJob(event=["DagObjectCreated", partial(self.on_dag_object_created)])) # 当创建dag物体时执行on_dag_object_created函数
         self.script_jobs.append(cmds.scriptJob(event=["Undo", partial(self.on_undo)])) # 当ctrl+z时执行on_undo函数
 
     def delete_script_jobs(self):
+        """ 删除script jobs """
         for job_number in self.script_jobs:
             cmds.scriptJob(kill=job_number)
 
         self.script_jobs = []
 
     def on_dag_object_created(self):
+        """ 当dag中出现新物体时执行 """
         if len(cmds.ls(typ="light")) != len(self.light_items):
             print("New light created...")
             self.refresh_lights()
 
     def on_undo(self):
+        """ ctrl+z时执行 """
         if len(cmds.ls(typ="light")) != len(self.light_items):
             print("Undo light created...")
             self.refresh_lights()
+
+    def on_node_deleted(self):
+        """ 节点删除时执行 """
+        self.refresh_lights()
 
     def showEvent(self, event):
         """ 当打开窗口时执行 """
