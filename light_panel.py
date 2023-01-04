@@ -88,8 +88,8 @@ class CustomColorButton(QtWidgets.QWidget): # 自定义颜色按钮
 
 class LightItem(QtWidgets.QWidget):
 
-    SUPPORTED_TYPES = ["ambientLight", "directionalLight", "pointLight", "spotLight"]
-    EMIT_TYPES = ["directionalLight", "pointLight", "spotLight"]
+    SUPPORTED_TYPES = ["ambientLight", "directionalLight", "pointLight", "spotLight", "areaLight"]
+    EMIT_TYPES = ["directionalLight", "pointLight", "spotLight", "areaLight"]
 
     def __init__(self, shape_name, parent=None):
         super(LightItem, self).__init__(parent)
@@ -105,7 +105,7 @@ class LightItem(QtWidgets.QWidget):
     def create_widgets(self):
         self.light_type_btn = QtWidgets.QPushButton()
         self.light_type_btn.setFixedSize(20, 20)
-        self.light_type_btn.setFlat(True)
+        self.light_type_btn.setFlat(True) # 设置按钮的显示形式
 
         self.visiblity_cb = QtWidgets.QCheckBox()
         
@@ -151,7 +151,17 @@ class LightItem(QtWidgets.QWidget):
         main_layout.addStretch()
     
     def create_connections(self):
-        pass
+        self.light_type_btn.clicked.connect(self.select_light)
+        self.visiblity_cb.toggled.connect(self.set_visibility)
+        
+        light_type = self.get_light_type()
+        if light_type in self.SUPPORTED_TYPES:
+            self.intensity_dsb.editingFinished.connect(self.on_intensity_changed)
+            self.color_btn.color_changed.connect(self.set_color)
+
+            if light_type in self.EMIT_TYPES:
+                self.emit_diffuse_cb.toggled.connect(self.set_emit_diffuse)
+                self.emit_specular_cb.toggled.connect(self.set_emit_specular)
 
     def update_values(self):
         self.light_type_btn.setIcon(self.get_light_type_icon())
@@ -172,6 +182,10 @@ class LightItem(QtWidgets.QWidget):
 
     def get_attribute_value(self, name, attribute):
         return cmds.getAttr("{0}.{1}".format(name, attribute))
+
+    def set_attribute_value(self, name, attribute,*args):
+        attr_name = "{0}.{1}".format(name, attribute)
+        cmds.setAttr(attr_name, *args)
 
     def get_light_type(self):
         return cmds.objectType(self.shape_name)
@@ -209,6 +223,25 @@ class LightItem(QtWidgets.QWidget):
 
     def emits_specular(self):
         return self.get_attribute_value(self.shape_name, "emitSpecular")
+    
+    def select_light(self):
+        cmds.select(self.get_transform_name)
+
+    def set_visibility(self, checked):
+        self.set_attribute_value(self.get_transform_name(), "visibility", checked)
+    
+    def on_intensity_changed(self):
+        self.set_attribute_value(self.shape_name, "intensity", self.intensity_dsb.value())
+    
+    def set_color(self, color):
+        self.set_attribute_value(self.shape_name, "color", color.redF(), color.greenF(), color.blueF())
+    
+    def set_emit_diffuse(self, checked):
+        self.set_attribute_value(self.shape_name, "emitDiffuse", checked)
+
+    def set_emit_specular(self, checked):
+        self.set_attribute_value(self.shape_name, "emitSpecular", checked)
+    
 
 class LightPanel(QtWidgets.QDialog):
 
@@ -220,12 +253,9 @@ class LightPanel(QtWidgets.QDialog):
         self.setWindowTitle(self.WINDOW_TITLE)
         self.setMinimumSize(500, 260)
         self.setWindowFlags(QtCore.Qt.WindowType.Window)
-        window_name = "WindowName"
-        if cmds.window(window_name, exists=True):
-            cmds.deleteUI(window_name, window=True)
-        self.setObjectName(window_name)
 
         self.light_items = []
+        self.script_jobs = []
 
         self.create_widgets()
         self.create_layouts()
@@ -296,16 +326,40 @@ class LightPanel(QtWidgets.QDialog):
             light_item = self.light_layout.takeAt(0)
             if light_item.widget():
                 light_item.widget().deleteLater()
+    
+    def create_script_jobs(self):
+        self.script_jobs.append(cmds.scriptJob(event=["DagObjectCreated", partial(self.on_dag_object_created)])) # 当创建dag物体时执行on_dag_object_created函数
+        self.script_jobs.append(cmds.scriptJob(event=["Undo", partial(self.on_undo)])) # 当ctrl+z时执行on_undo函数
+
+    def delete_script_jobs(self):
+        for job_number in self.script_jobs:
+            cmds.scriptJob(kill=job_number)
+
+        self.script_jobs = []
+
+    def on_dag_object_created(self):
+        if len(cmds.ls(typ="light")) != len(self.light_items):
+            print("New light created...")
+            self.refresh_lights()
+
+    def on_undo(self):
+        if len(cmds.ls(typ="light")) != len(self.light_items):
+            print("Undo light created...")
+            self.refresh_lights()
 
     def showEvent(self, event):
         """ 当打开窗口时执行 """
         self.refresh_lights()
+        self.create_script_jobs()
     
     def closeEvent(self, event):
         """ 当关闭窗口时执行 """
         self.clear_lights()
+        self.delete_script_jobs()
 
 if __name__ == '__main__':
+    cmds.file(new=True,f=True)
+    cmds.file("D:/ZhangRuiChen/Pyside2ForMaya/light_test.ma",o=True,f=True)
     try:
         light_panel_dialog.close()
         light_panel_dialog.deleteLater()
