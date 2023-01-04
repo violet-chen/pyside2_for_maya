@@ -18,10 +18,10 @@ class MyLineEdit(QtWidgets.QLineEdit):
     def keyPressEvent(self, e):  # 使用QLineEdit自带的事件，当按键按下时触发并发送数据
         super(MyLineEdit, self).keyPressEvent(e)
 
-        if e.key() == QtCore.Qt.Key_Enter:
-            self.enter_pressed.emit("Enter Key Pressed")  # 当右enter键按下时发送数据
-        elif e.key() == QtCore.Qt.Key_Return:
-            self.enter_pressed.emit("Return Key Pressed") # 当回车键按下时发送数据
+        if e.key() == QtCore.Qt.Key_Enter: # 当右enter键按下时
+            self.enter_pressed.emit("Enter Key Pressed")  # 发送数据给连接的函数
+        elif e.key() == QtCore.Qt.Key_Return: # 当回车键按下时
+            self.enter_pressed.emit("Return Key Pressed") # 发送数据给连接的函数
 
 class TestDialog(QtWidgets.QDialog):
 
@@ -56,7 +56,7 @@ class TestDialog(QtWidgets.QDialog):
         main_layout.addLayout(button_layout)
 
     def create_connections(self):
-        self.lineEdit.enter_pressed.connect(self.on_enter_pressed)
+        self.lineEdit.enter_pressed.connect(self.on_enter_pressed) # 当enter_pressed使用emit时执行连接的函数
         self.cancel_btn.clicked.connect(self.close)  # self.close是自带的不需要自己写函数
 
     def on_enter_pressed(self, text):
