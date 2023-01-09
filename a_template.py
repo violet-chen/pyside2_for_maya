@@ -22,8 +22,6 @@ class TestDialog(QtWidgets.QDialog):
         self.setWindowTitle(self.WINDOW_TITLE)
         self.setMinimumSize(300, 80)
         self.setWindowFlags(QtCore.Qt.WindowType.Window)
-        window_name = "WindowName"
-        self.setObjectName(window_name)
         self.setStyleSheet("font: 12pt 'Arial';")
 
         self.create_widgets()
