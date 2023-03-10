@@ -1,3 +1,4 @@
+# coding:utf-8
 # 配合MayaQWidgetDockableMixin模块制作 可以停靠在maya界面上的参考
 # 特点：会自动保存在工作区上面，关掉maya不会清除窗口内容
 # 开发时需要注意的点：在dock状态下不方便调试，开发时要在非dock状态以便调试
